@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ignithon – 12‑Hour Hackathon Timer</title>
+    <style>
+      @font-face {
+        font-family: "Aero";
+        src: url("./assets/Aero.ttf") format("truetype");
+        font-display: swap;
+      }
+
+      :root {
+        --digit-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+        --w: 1920;
+        --h: 1080;
+      }
+
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family: "Aero", sans-serif;
+      }
+
+      .stage {
+        position: relative;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+      }
+
+      .chrome {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        display: flex;
+        gap: 10px;
+        z-index: 2;
+        user-select: none;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(0, 0, 0, 0.45);
+        color: #fff;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        cursor: pointer;
+        backdrop-filter: blur(6px);
+        transition: transform 0.12s ease, background 0.2s ease,
+          border-color 0.2s ease;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(255, 255, 255, 0.55);
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      svg.timer-canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: 1;
+        background: #000;
+      }
+
+      /* Ensure SVG text uses Aero */
+      svg text {
+        font-family: "Aero", sans-serif;
+      }
+
+      text.digits {
+        font-weight: 800;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        font-size: 140px;
+        fill: #fff;
+        filter: drop-shadow(0 8px 22px rgba(255, 255, 255, 0.45));
+        letter-spacing: 2px;
+      }
+
+      text.label {
+        font-size: 26px;
+        letter-spacing: 6px;
+        text-transform: uppercase;
+        opacity: 0.9;
+        text-anchor: middle;
+        fill: white;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage" aria-label="Ignithon 12-hour countdown">
+      <div class="chrome">
+        <button
+          id="fullscreenBtn"
+          class="btn"
+          type="button"
+          title="Toggle Fullscreen"
+        >
+          ⤢ Fullscreen
+        </button>
+      </div>
+
+      <!-- Same coordinate system as the asset: 1920×1080. We draw the SVG as an image
+         and position the digits at the exact centers of the three black rectangles. -->
+      <svg
+        class="timer-canvas"
+        viewBox="0 0 1920 1080"
+        preserveAspectRatio="xMidYMid slice"
+        role="img"
+        aria-label="Timer canvas"
+      >
+        <image
+          href="./assets/Ignithon_Timer_Background.svg"
+          x="0"
+          y="0"
+          width="1920"
+          height="1080"
+          preserveAspectRatio="xMidYMid slice"
+        />
+
+        <!-- HOURS rectangle center: (641.839, 681.435) -->
+        <text id="t-hours" class="digits" x="635.839" y="670.435">12</text>
+        <text class="label" x="641.839" y="754.469">HOURS</text>
+
+        <!-- MINUTES rectangle center: (960.5, 681.435) -->
+        <text id="t-minutes" class="digits" x="955.5" y="670.435">00</text>
+        <text class="label" x="960.5" y="754.469">MINUTES</text>
+
+        <!-- SECONDS rectangle center: (1279.159, 681.435) -->
+        <text id="t-seconds" class="digits" x="1275.159" y="670.435">00</text>
+        <text class="label" x="1279.159" y="754.469">SECONDS</text>
+      </svg>
+
+      <audio id="alarm" preload="auto">
+        <source src="./assets/alarm.mp3" type="audio/mpeg" />
+        Your browser does not support the audio element.
+      </audio>
+    </main>
+
+    <script>
+      // ========================= DEV CONTROLS (no UI) =========================
+      // Launch moment (LOCAL time). Months are 0-indexed: 7 => August.
+      const LAUNCH_LOCAL_MS = new Date(2025, 7, 24, 9, 0, 0).getTime(); // 9:00 AM, Aug 24, 2025
+
+      // Phase 2 duration (12 hours)
+      const DURATION_SECONDS = 12 * 60 * 60;
+
+      // Persist end time so reloads don't reset during hackathon
+      const PERSIST_STATE = true;
+
+      // Bump to force-clear stored end time for a new event
+      const RESET_TOKEN = "ignithon_v3";
+
+      // ============================== Runtime ================================
+      const $h = document.getElementById("t-hours");
+      const $m = document.getElementById("t-minutes");
+      const $s = document.getElementById("t-seconds");
+      const alarm = document.getElementById("alarm");
+      const fullscreenBtn = document.getElementById("fullscreenBtn");
+      const muteBtn = document.getElementById("muteBtn");
+
+      let muted = false;
+      let phase = "pre"; // 'pre' (countdown to launch) or 'hack' (12h countdown)
+      let endTime = null; // ms timestamp when 12h ends
+      let playedEndSound = false;
+
+      const LS_KEY_END = "ignithon_timer_end";
+      const LS_KEY_TOKEN = "ignithon_timer_token";
+
+      function pad2(n) {
+        return n < 10 ? "0" + n : "" + n;
+      }
+
+      function setDigits(totalSec) {
+        const sec = Math.max(0, Math.floor(totalSec));
+        const hrs = Math.floor(sec / 3600);
+        const mins = Math.floor((sec % 3600) / 60);
+        const secs = sec % 60;
+        $h.textContent = String(hrs);
+        $m.textContent = pad2(mins);
+        $s.textContent = pad2(secs);
+      }
+
+      function nowMs() {
+        return Date.now();
+      }
+
+      function restoreOrInitHackathon(now) {
+        // Handle token/versioning
+        if (localStorage.getItem(LS_KEY_TOKEN) !== RESET_TOKEN) {
+          localStorage.removeItem(LS_KEY_END);
+          localStorage.setItem(LS_KEY_TOKEN, RESET_TOKEN);
+        }
+        if (PERSIST_STATE) {
+          const savedEndStr = localStorage.getItem(LS_KEY_END);
+          if (savedEndStr) {
+            const savedEnd = parseInt(savedEndStr, 10);
+            if (!Number.isNaN(savedEnd)) endTime = savedEnd;
+          }
+        }
+        if (!endTime) {
+          endTime = LAUNCH_LOCAL_MS + DURATION_SECONDS * 1000;
+          if (PERSIST_STATE) localStorage.setItem(LS_KEY_END, String(endTime));
+        }
+      }
+
+      function init() {
+        const now = nowMs();
+        if (now < LAUNCH_LOCAL_MS) {
+          phase = "pre";
+          setDigits(Math.ceil((LAUNCH_LOCAL_MS - now) / 1000));
+        } else {
+          phase = "hack";
+          restoreOrInitHackathon(now);
+          setDigits(Math.ceil((endTime - now) / 1000));
+        }
+      }
+
+      function tick() {
+        const now = nowMs();
+        if (phase === "pre") {
+          const untilLaunch = Math.ceil((LAUNCH_LOCAL_MS - now) / 1000);
+          setDigits(untilLaunch);
+          if (untilLaunch <= 0) {
+            // Transition to 12h countdown
+            phase = "hack";
+            restoreOrInitHackathon(now);
+          }
+        } else {
+          const remaining = Math.ceil((endTime - now) / 1000);
+          setDigits(remaining);
+          if (remaining <= 0 && !playedEndSound) {
+            if (!muted) {
+              alarm.currentTime = 0;
+              alarm.play().catch(() => {
+                muteBtn.textContent = "🔇 Enable Sound";
+              });
+            }
+            playedEndSound = true;
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      // Kick off
+      init();
+      requestAnimationFrame(tick);
+
+      // Fullscreen support
+      async function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          try {
+            await document.documentElement.requestFullscreen();
+          } catch (e) {}
+        } else {
+          try {
+            await document.exitFullscreen();
+          } catch (e) {}
+        }
+      }
+
+      fullscreenBtn.addEventListener("click", () => {
+        toggleFullscreen();
+        if (!muted && phase === "hack") {
+          const rem = Math.ceil((endTime - nowMs()) / 1000);
+          if (rem <= 0) {
+            alarm.currentTime = 0;
+            alarm.play().catch(() => {});
+          }
+        }
+      });
+
+      // Mute/Unmute toggle
+      muteBtn.addEventListener("click", () => {
+        muted = !muted;
+        muteBtn.textContent = muted ? "🔇 Sound Off" : "🔊 Sound";
+        alarm.muted = muted;
+      });
+
+      // Keep numbers accurate when returning to the tab
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          init();
+        }
+      });
+    </script>
+  </body>
+</html>
