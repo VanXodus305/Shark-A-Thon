@@ -1,300 +1,435 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ignithon – 12‑Hour Hackathon Timer</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tech Domains & Meeting Spaces</title>
     <style>
-      @font-face {
-        font-family: "Aero";
-        src: url("./assets/Aero.ttf") format("truetype");
-        font-display: swap;
-      }
-
-      :root {
-        --digit-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
-        --w: 1920;
-        --h: 1080;
-      }
-
-      html,
-      body {
-        height: 100%;
+      * {
         margin: 0;
-        background: #000;
-        color: #fff;
-        font-family: "Aero", sans-serif;
+        padding: 0;
+        box-sizing: border-box;
       }
 
-      .stage {
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #000a0f 0%,
+          #001a1a 50%,
+          #0a1515 100%
+        );
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 15px;
+        overflow: hidden;
         position: relative;
-        width: 100vw;
-        height: 100dvh;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(
+            2px 2px at 20% 30%,
+            #00ff88,
+            rgba(0, 255, 136, 0)
+          ),
+          radial-gradient(2px 2px at 60% 70%, #00ff88, rgba(0, 255, 136, 0)),
+          radial-gradient(1px 1px at 50% 50%, #00ff88, rgba(0, 255, 136, 0)),
+          radial-gradient(1px 1px at 80% 10%, #00ff88, rgba(0, 255, 136, 0)),
+          radial-gradient(2px 2px at 90% 60%, #00ff88, rgba(0, 255, 136, 0)),
+          radial-gradient(1px 1px at 30% 80%, #00ff88, rgba(0, 255, 136, 0)),
+          radial-gradient(1px 1px at 10% 40%, #00ff88, rgba(0, 255, 136, 0));
+        background-size: 200% 200%;
+        background-position: 0% 0%;
+        pointer-events: none;
+        animation: twinkle 5s ease-in-out infinite;
+      }
+
+      @keyframes twinkle {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      .container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+      }
+
+      .logo {
+        text-align: center;
+        margin-bottom: 12px;
+        flex-shrink: 0;
+      }
+
+      .logo img {
+        height: 70px;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 8px;
+        color: white;
+        flex-shrink: 0;
+      }
+
+      .header h1 {
+        font-size: 1.8em;
+        margin-bottom: 3px;
+        color: #00ff88;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-shadow: 0 0 20px rgba(0, 255, 136, 0.5),
+          0 0 40px rgba(0, 255, 136, 0.3);
+      }
+
+      .header p {
+        font-size: 0.85em;
+        color: #00ff88;
+        font-weight: 400;
+        opacity: 0.8;
+        letter-spacing: 1px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        flex: 1;
         overflow: hidden;
       }
 
-      .chrome {
-        position: absolute;
-        top: 14px;
-        right: 14px;
-        display: flex;
-        gap: 10px;
-        z-index: 2;
-        user-select: none;
-      }
-
-      .btn {
-        appearance: none;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        background: rgba(0, 0, 0, 0.45);
-        color: #fff;
-        padding: 10px 14px;
+      .card {
+        background: rgba(0, 20, 20, 0.7);
         border-radius: 12px;
-        font-size: 14px;
-        cursor: pointer;
-        backdrop-filter: blur(6px);
-        transition: transform 0.12s ease, background 0.2s ease,
-          border-color 0.2s ease;
-      }
-      .btn:hover {
-        transform: translateY(-1px);
-        border-color: rgba(255, 255, 255, 0.55);
-      }
-      .btn:active {
-        transform: translateY(0);
+        padding: 12px 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.2),
+          inset 0 0 20px rgba(0, 255, 136, 0.05);
+        transition: all 0.3s ease;
+        border: 2px solid rgba(0, 255, 136, 0.3);
+        text-align: center;
+        backdrop-filter: blur(10px);
       }
 
-      svg.timer-canvas {
-        position: absolute;
-        inset: 0;
+      .card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 0 30px rgba(0, 255, 136, 0.5),
+          inset 0 0 20px rgba(0, 255, 136, 0.1);
+        border-color: #00ff88;
+      }
+
+      .card-content {
+        flex: 1;
         width: 100%;
-        height: 100%;
+      }
+
+      .card-title {
+        font-size: 0.9em;
+        color: #00ff88;
+        font-weight: 600;
+        margin-bottom: 2px;
+        line-height: 1.2;
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+      }
+
+      .card-room {
+        font-size: 1.6em;
+        font-weight: 700;
+        color: #00ff88;
+        margin-top: 5px;
+        text-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+      }
+
+      .emoji {
+        font-size: 2em;
+        margin-bottom: 6px;
         display: block;
-        z-index: 1;
-        background: #000;
+        filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.4));
       }
 
-      /* Ensure SVG text uses Aero */
-      svg text {
-        font-family: "Aero", sans-serif;
+      .footer {
+        text-align: center;
+        color: #00ff88;
+        padding-top: 5px;
+        border-top: 1px solid rgba(0, 255, 136, 0.2);
+        font-size: 0.75em;
+        flex-shrink: 0;
+        opacity: 0.7;
       }
 
-      text.digits {
-        font-weight: 800;
-        text-anchor: middle;
-        dominant-baseline: middle;
-        font-size: 140px;
-        fill: #fff;
-        filter: drop-shadow(0 8px 22px rgba(255, 255, 255, 0.45));
-        letter-spacing: 2px;
+      .stats {
+        display: none;
       }
 
-      text.label {
-        font-size: 26px;
-        letter-spacing: 6px;
+      .stat-box {
+        text-align: center;
+        color: white;
+      }
+
+      .stat-number {
+        font-size: 2.5em;
+        font-weight: 700;
+        color: #2ecc71;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 0.95em;
+        color: #bdc3c7;
         text-transform: uppercase;
-        opacity: 0.9;
-        text-anchor: middle;
-        fill: white;
+        letter-spacing: 1px;
+      }
+
+      @media (max-width: 1600px) {
+        .grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
+      @media (max-width: 1200px) {
+        .grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      @media (max-width: 800px) {
+        .grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .header h1 {
+          font-size: 1.6em;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header h1 {
+          font-size: 1.4em;
+        }
+
+        .card {
+          flex-direction: column;
+          text-align: center;
+          gap: 15px;
+        }
+
+        .emoji {
+          margin-right: 0;
+        }
+
+        .card-room {
+          text-align: center;
+        }
+
+        .stats {
+          gap: 30px;
+        }
       }
     </style>
   </head>
   <body>
-    <main class="stage" aria-label="Shark-A-Thon countdown">
-      <div class="chrome">
-        <button
-          id="fullscreenBtn"
-          class="btn"
-          type="button"
-          title="Toggle Fullscreen"
-        >
-          ⤢ Fullscreen
-        </button>
+    <div class="container">
+      <div class="logo">
+        <img
+          src="https://www.gfgkiit.in/gfg-logoCropped.webp"
+          alt="GFG KIIT Logo"
+        />
       </div>
 
-      <!-- Same coordinate system as the asset: 1920×1080. We draw the SVG as an image
-         and position the digits at the exact centers of the three black rectangles. -->
-      <svg
-        class="timer-canvas"
-        viewBox="0 0 1920 1080"
-        preserveAspectRatio="xMidYMid slice"
-        role="img"
-        aria-label="Timer canvas"
-      >
-        <image
-          href="./assets/Ignithon_Timer_Background.svg"
-          x="0"
-          y="0"
-          width="1920"
-          height="1080"
-          preserveAspectRatio="xMidYMid slice"
-        />
+      <div class="grid">
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">🤖</span>
+            <div class="card-title">AI / ML</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              Main Interview
+            </p>
+          </div>
+          <div class="card-room">B202</div>
+        </div>
 
-        <!-- HOURS rectangle center: (641.839, 681.435) -->
-        <text id="t-hours" class="digits" x="635.839" y="670.435">12</text>
-        <text class="label" x="641.839" y="754.469">HOURS</text>
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">🌐</span>
+            <div class="card-title">Web Development</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              Main Interview
+            </p>
+          </div>
+          <div class="card-room">B204</div>
+        </div>
 
-        <!-- MINUTES rectangle center: (960.5, 681.435) -->
-        <text id="t-minutes" class="digits" x="955.5" y="670.435">00</text>
-        <text class="label" x="960.5" y="754.469">MINUTES</text>
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">🔗</span>
+            <div class="card-title">AI/ML + WebDev</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              Combined
+            </p>
+          </div>
+          <div class="card-room">B203</div>
+        </div>
 
-        <!-- SECONDS rectangle center: (1279.159, 681.435) -->
-        <text id="t-seconds" class="digits" x="1275.159" y="670.435">00</text>
-        <text class="label" x="1279.159" y="754.469">SECONDS</text>
-      </svg>
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">💻</span>
+            <div class="card-title">Competitive Programming</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              CP Domain
+            </p>
+          </div>
+          <div class="card-room">B212</div>
+        </div>
 
-      <audio id="alarm" preload="auto">
-        <source src="./assets/alarm.mp3" type="audio/mpeg" />
-        Your browser does not support the audio element.
-      </audio>
-    </main>
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">🎮</span>
+            <div class="card-title">App, Game & Blockchain</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              Development
+            </p>
+          </div>
+          <div class="card-room">B112</div>
+        </div>
 
-    <script>
-      // ========================= DEV CONTROLS (no UI) =========================
-      // Launch moment (LOCAL time). Months are 0-indexed: 7 => August.
-      const LAUNCH_LOCAL_MS = new Date(2025, 11, 14, 10, 0, 0).getTime(); // 10:00 AM, Dec 14, 2025
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">☁️</span>
+            <div class="card-title">System Dev, Cloud & Cyber</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              Security
+            </p>
+          </div>
+          <div class="card-room">B114</div>
+        </div>
 
-      // Phase 2 duration (3.5 hours)
-      const DURATION_SECONDS = 3.5 * 60 * 60;
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">➕</span>
+            <div class="card-title">Extra Room</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              6+ Domains
+            </p>
+          </div>
+          <div class="card-room">B207</div>
+        </div>
 
-      // Persist end time so reloads don't reset during hackathon
-      const PERSIST_STATE = true;
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">📊</span>
+            <div class="card-title">Non-Tech Reporting</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              General
+            </p>
+          </div>
+          <div class="card-room">B209</div>
+        </div>
 
-      // Bump to force-clear stored end time for a new event
-      const RESET_TOKEN = "ignithon_v3";
+        <div class="card">
+          <div class="card-content">
+            <span class="emoji">🎯</span>
+            <div class="card-title">OC Room & Participant</div>
+            <p
+              style="
+                color: #00cc77;
+                font-size: 0.8em;
+                margin-top: 3px;
+                opacity: 0.8;
+              "
+            >
+              Reporting
+            </p>
+          </div>
+          <div class="card-room">B213</div>
+        </div>
+      </div>
 
-      // ============================== Runtime ================================
-      const $h = document.getElementById("t-hours");
-      const $m = document.getElementById("t-minutes");
-      const $s = document.getElementById("t-seconds");
-      const alarm = document.getElementById("alarm");
-      const fullscreenBtn = document.getElementById("fullscreenBtn");
-      const muteBtn = document.getElementById("muteBtn");
-
-      let muted = false;
-      let phase = "pre"; // 'pre' (countdown to launch) or 'hack' (12h countdown)
-      let endTime = null; // ms timestamp when 12h ends
-      let playedEndSound = false;
-
-      const LS_KEY_END = "ignithon_timer_end";
-      const LS_KEY_TOKEN = "ignithon_timer_token";
-
-      function pad2(n) {
-        return n < 10 ? "0" + n : "" + n;
-      }
-
-      function setDigits(totalSec) {
-        const sec = Math.max(0, Math.floor(totalSec));
-        const hrs = Math.floor(sec / 3600);
-        const mins = Math.floor((sec % 3600) / 60);
-        const secs = sec % 60;
-        $h.textContent = String(hrs);
-        $m.textContent = pad2(mins);
-        $s.textContent = pad2(secs);
-      }
-
-      function nowMs() {
-        return Date.now();
-      }
-
-      function restoreOrInitHackathon(now) {
-        // Handle token/versioning
-        if (localStorage.getItem(LS_KEY_TOKEN) !== RESET_TOKEN) {
-          localStorage.removeItem(LS_KEY_END);
-          localStorage.setItem(LS_KEY_TOKEN, RESET_TOKEN);
-        }
-        if (PERSIST_STATE) {
-          const savedEndStr = localStorage.getItem(LS_KEY_END);
-          if (savedEndStr) {
-            const savedEnd = parseInt(savedEndStr, 10);
-            if (!Number.isNaN(savedEnd)) endTime = savedEnd;
-          }
-        }
-        if (!endTime) {
-          endTime = LAUNCH_LOCAL_MS + DURATION_SECONDS * 1000;
-          if (PERSIST_STATE) localStorage.setItem(LS_KEY_END, String(endTime));
-        }
-      }
-
-      function init() {
-        const now = nowMs();
-        if (now < LAUNCH_LOCAL_MS) {
-          phase = "pre";
-          setDigits(Math.ceil((LAUNCH_LOCAL_MS - now) / 1000));
-        } else {
-          phase = "hack";
-          restoreOrInitHackathon(now);
-          setDigits(Math.ceil((endTime - now) / 1000));
-        }
-      }
-
-      function tick() {
-        const now = nowMs();
-        if (phase === "pre") {
-          const untilLaunch = Math.ceil((LAUNCH_LOCAL_MS - now) / 1000);
-          setDigits(untilLaunch);
-          if (untilLaunch <= 0) {
-            // Transition to 12h countdown
-            phase = "hack";
-            restoreOrInitHackathon(now);
-          }
-        } else {
-          const remaining = Math.ceil((endTime - now) / 1000);
-          setDigits(remaining);
-          if (remaining <= 0 && !playedEndSound) {
-            if (!muted) {
-              alarm.currentTime = 0;
-              alarm.play().catch(() => {
-                muteBtn.textContent = "🔇 Enable Sound";
-              });
-            }
-            playedEndSound = true;
-          }
-        }
-        requestAnimationFrame(tick);
-      }
-
-      // Kick off
-      init();
-      requestAnimationFrame(tick);
-
-      // Fullscreen support
-      async function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-          try {
-            await document.documentElement.requestFullscreen();
-          } catch (e) {}
-        } else {
-          try {
-            await document.exitFullscreen();
-          } catch (e) {}
-        }
-      }
-
-      fullscreenBtn.addEventListener("click", () => {
-        toggleFullscreen();
-        if (!muted && phase === "hack") {
-          const rem = Math.ceil((endTime - nowMs()) / 1000);
-          if (rem <= 0) {
-            alarm.currentTime = 0;
-            alarm.play().catch(() => {});
-          }
-        }
-      });
-
-      // Mute/Unmute toggle
-      muteBtn.addEventListener("click", () => {
-        muted = !muted;
-        muteBtn.textContent = muted ? "🔇 Sound Off" : "🔊 Sound";
-        alarm.muted = muted;
-      });
-
-      // Keep numbers accurate when returning to the tab
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          init();
-        }
-      });
-    </script>
+      <div class="footer">
+        <p>
+          All information organized for seamless coordination and management
+        </p>
+      </div>
+    </div>
   </body>
 </html>
